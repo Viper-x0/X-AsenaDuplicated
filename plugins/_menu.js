@@ -10,7 +10,7 @@ const {
 } = require("../config");
 const {
     tiny
-} = require("@viperbwoi/fancyfonts")
+} = require("@viper-x/fancytext")
 command(
     {
         pattern: "menu",
