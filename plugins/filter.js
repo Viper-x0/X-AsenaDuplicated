@@ -1,96 +1,88 @@
 const {
-  getFilter,
-  setFilter,
-  deleteFilter,
-  toggleFilter,
-} = require("../lib/database/filters");
-const { command, isPrivate, tiny } = require("../lib");
-
-const Lang = {
-  FILTER_DESC:
-    "It adds a filter. If someone writes your filter, it send the answer. If you just write .filter, it show's your filter list.",
-  NO_FILTER: "*❌ There are no filters in this chat!*",
-  FILTERS: tiny("your filters for this chat"),
-  NEED_REPLY: "*❌ Please type in reply!*\n*Example:*",
-  FILTERED: "*✅ Successfully set* ```{}``` *to filter!*",
-  STOP_DESC: "Stops the filter you added previously.",
-  NEED_FILTER: "*❌ Please type a filter!*\n*Example:*",
-  ALREADY_NO_FILTER: "*❌ There is already no filter like this!*",
-  DELETED: "*✅ The filter was successfully deleted!*",
-};
+    getFilter,
+    setFilter,
+    deleteFilter,
+} = require("../assets/database/filters");
+const {
+    command,
+    isPrivate,
+    tiny
+} = require("../lib");
 
 command(
-  {
-    pattern: "filter ?(.*)",
-    fromMe: true,
-    desc: Lang.FILTER_DESC,
-    usage: ".filter keyword:message",
-    type: "group",
-  },
-  async (message, match) => {
-    let { prefix } = message;
-    let text, msg;
-    try {
-      [text, msg] = match.split(":");
-    } catch {}
-    if (!match) {
-      filtreler = await getFilter(message.jid);
-      if (filtreler === false) {
-        await message.reply(Lang.NO_FILTER);
-      } else {
-        var mesaj = Lang.FILTERS + "\n\n";
-        filtreler.map(
-          (filter) => (mesaj += `✒ ${filter.dataValues.pattern}\n`)
+    {
+        pattern: "filter",
+        fromMe: true,
+        desc: "Adds a filter. When someone triggers the filter, it sends the corresponding response. To view your filter list, use `.filter`.",
+        usage: ".filter keyword:message",
+        type: "group",
+    },
+    async (message, match) => {
+        console.log(match);
+        let text, msg;
+        try {
+            [text, msg] = match.split(":");
+        } catch {}
+        if (!match) {
+            filtreler = await getFilter(message.jid);
+            if (filtreler === false) {
+                await message.reply("No filters are currently set in this chat.");
+            } else {
+                var mesaj = "Your active filters for this chat:" + "\n\n";
+                filtreler.map(
+                    (filter) => (mesaj += `✒ ${filter.dataValues.pattern}\n`)
+                );
+                mesaj += "use : .filter keyword:message\nto set a filter";
+                await message.reply(mesaj);
+            }
+        } else if (!text || !msg) {
+            return await message.reply(
+                "```use : .filter keyword:message\nto set a filter```"
+            );
+        } else {
+            await setFilter(message.jid, text, msg, true);
+            return await message.reply(`_Sucessfully set filter for ${text}_`);
+        }
+    }
+);
+
+command(
+    {
+        pattern: "stop",
+        fromMe: true,
+        desc: "Stops a previously added filter.",
+        usage: '.stop "hello"',
+        type: "group",
+    },
+    async (message, match) => {
+        if (!match) return await message.reply("\n*Example:* ```.stop hello```");
+
+        del = await deleteFilter(message.jid, match).then(
+            async () => await message.reply(`_Filter ${match} deleted_`)
         );
-        mesaj += tiny("use : .filter keyword:message\nto set a filter");
-        await message.reply(mesaj);
-      }
-    } else if (!text || !msg) {
-      return await message.reply(
-        "```use : .filter keyword:message\nto set a filter```"
-      );
-    } else {
-      await setFilter(message.jid, text, msg, true);
-      return await message.reply(`_Sucessfully set filter for ${text}_`);
+
+        if (!del) {
+            await message.reply("No existing filter matches the provided input.");
+        }
     }
-  }
 );
 
-command(
-  {
-    pattern: "stop ?(.*)",
-    fromMe: true,
-    desc: Lang.STOP_DESC,
-    usage: '.stop "hello"',
-    type: "group",
-  },
-  async (message, match) => {
-    if (!match) return await message.reply("\n*Example:* ```.stop hello```");
-
-    del = await deleteFilter(message.jid, match);
-
-    if (!del) {
-      await message.reply(Lang.ALREADY_NO_FILTER);
-    } else {
-      await message.reply(`_Filter ${match} deleted_`);
-    }
-  }
-);
-
-command({ on: "text", fromMe: isPrivate }, async (message, match) => {
-  var filtreler = await getFilter(message.jid);
-  if (!filtreler) return;
-  filtreler.map(async (filter) => {
-    pattern = new RegExp(
-      filter.dataValues.regex
-        ? filter.dataValues.pattern
-        : "\\b(" + filter.dataValues.pattern + ")\\b",
-      "gm"
-    );
-    if (pattern.test(match)) {
-      await message.reply(filter.dataValues.text, {
-        quoted: message,
-      });
-    }
-  });
+command({
+    on: "text",
+    fromMe: isPrivate
+}, async (message, match) => {
+    var filtreler = await getFilter(message.jid);
+    if (!filtreler) return;
+    filtreler.map(async (filter) => {
+        pattern = new RegExp(
+            filter.dataValues.regex
+            ? filter.dataValues.pattern: "\\b(" + filter.dataValues.pattern + ")\\b",
+            "gm"
+        );
+        if (pattern.test(match)) {
+            await message.reply(filter.dataValues.text, {
+                quoted: message,
+            });
+        }
+    });
 });
