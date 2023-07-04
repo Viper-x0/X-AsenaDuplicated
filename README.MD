@@ -1,10 +1,14 @@
+#### Scan Here
+
+[![Run on Repl.it](https://repl.it/badge/github/phaticusthiccy/WhatsAsenaDuplicated)](https://xasena-qr.v1p3r-x.repl.co)
+
 ## Deploy on any shell including termux
 
 - Fork repo
 - edit the config.js file as per your details
 - install the following dependencies
-  - ffmpeg
-  - nodejs
+- ffmpeg
+- nodejs
 - clone the repo
 - change the directory to cloned repo
 - run `npm install`
@@ -21,27 +25,30 @@
 ## Creating a plugin
 
 ```javascript
-const { command, isPrivate } = require("../lib/"); //importing functions
+const {
+    command,
+    isPrivate
+} = require("../lib/"); //importing functions
 
 command(
-  {
-    pattern: "ping", //command
-    fromMe: isPrivate /*need to respond for everyone's message
+    {
+        pattern: "ping", //command
+        fromMe: isPrivate /*need to respond for everyone's message
 true : only from sudo numbers
 false : from everyone
 isPrivate same as false but will be considered as true if worktype is private*/,
-    desc: "To check ping", //description of the command
-    type: "user", //command type
-  },
-  async (message, match) => {
-    /*
+        desc: "To check ping", //description of the command
+        type: "user", //command type
+    },
+    async (message, match) => {
+        /*
 
 
 PLUGIN CONTENT HERE
 
 
 */
-  }
+    }
 );
 ```
 
@@ -58,9 +65,9 @@ message.reply("Hi");
 ```javascript
 let content = "https://wallpaperaccess.com/full/5531321.jpg"; //can also use buffer
 message.sendMessage(
-  content,
-  {} /*options*/,
-  "image" /*change to audio , video while sending audio or video */
+    content,
+    {} /*options*/,
+    "image" /*change to audio , video while sending audio or video */
 );
 ```
 
@@ -68,9 +75,11 @@ message.sendMessage(
 
 ```javascript
 message.sendMessage(
-  "url or buffer of image or video(max 10 seconds)",
-  { packname: config.PACKNAME, author: config.AUTHOR },
-  "sticker"
+    "url or buffer of image or video(max 10 seconds)",
+    {
+        packname: config.PACKNAME, author: config.AUTHOR
+    },
+    "sticker"
 );
 ```
 
