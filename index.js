@@ -1,179 +1,56 @@
-const {
-    default: makeWASocket,
-        useMultiFileAuthState,
-        Browsers,
-    } = require("@whiskeysockets/baileys");
-    const path = require("path");
-    const {
-        Image,
-        Message,
-        Sticker,
-        Video
-    } = require("./lib/Messages");
-    let fs = require("fs");
-    let config = require("./config");
-    const pino = require("pino");
-    logger = pino({
-        level: "silent"
-    });
-    const {
-        serialize,
-        Greetings
-    } = require("./lib");
-    const plugins = require("./lib/plugins");
-    const {
-        MakeSession
-    } = require("./lib/session");
-    if (!fs.existsSync("./session/creds.json")) {
-        MakeSession(config.SESSION_ID, "./session/creds.json").then(
-            console.log("Vesrion : " + require("./package.json").version)
-        );
+const fs = require("fs").promises;
+const path = require("path");
+const config = require("./config");
+const connect = require("./lib/connection");
+const { loadSession } = require("baileys");
+const io = require("socket.io-client");
+const { getandRequirePlugins } = require("./assets/database/plugins");
+
+global.__basedir = __dirname; // Set the base directory for the project
+
+const readAndRequireFiles = async (directory) => {
+  try {
+    const files = await fs.readdir(directory);
+    return Promise.all(
+      files
+        .filter((file) => path.extname(file).toLowerCase() === ".js")
+        .map((file) => require(path.join(directory, file)))
+    );
+  } catch (error) {
+    console.error("Error reading and requiring files:", error);
+    throw error;
+  }
+};
+
+async function initialize() {
+  console.log("X-Asena");
+  try {
+    if (config.SESSION_ID && !fs.existsSync("session")) {
+      console.log("loading session from session id...");
+      fs.mkdirSync("./session");
+      const credsData = await loadSession(config.SESSION_ID);
+      fs.writeFileSync(
+        "./session/creds.json",
+        JSON.stringify(credsData.creds, null, 2)
+      );
     }
-    fs.readdirSync(__dirname + "/assets/database/").forEach((db) => {
-        if (path.extname(db).toLowerCase() == ".js") {
-            require(__dirname + "/assets/database/" + db);
-        }
-    });
-    async function Xasena() {
-        const {
-            state, saveCreds
-        } = await useMultiFileAuthState(
-            __dirname + "/session"
-        );
-        let conn = makeWASocket({
-            auth: state,
-            printQRInTerminal: true,
-            logger: pino({
-                level: "silent"
-            }),
-            browser: Browsers.macOS("Desktop"),
-            downloadHistory: false,
-            syncFullHistory: false,
-        });
-        conn.ev.on("connection.update",
-            async (s) => {
-                const {
-                    connection,
-                    lastDisconnect
-                } = s;
-                if (connection === "connecting") {
-                    console.log("X-AsenaDuplicated");
-                    console.log("ℹ️ Connecting to WhatsApp... Please Wait.");
-                }
-                if (connection === "open") {
-                    console.log("✅ Login Successful!");
-                    console.log("Syncing Database");
-                    config.DATABASE.sync();
-                    conn.ev.on("creds.update", saveCreds);
+    await readAndRequireFiles(path.join(__dirname, "/assets/database/"));
+    console.log("Syncing Database");
 
-                    console.log("⬇️  Installing Plugins...");
-                    fs.readdirSync(__dirname + "/plugins").forEach((plugin) => {
-                        if (path.extname(plugin).toLowerCase() == ".js") {
-                            require(__dirname + "/plugins/" + plugin);
-                        }
-                    });
-                    console.log("✅ Plugins Installed!");
+    await config.DATABASE.sync();
 
-                    let str = `\`\`\`X-Asena connected \nversion : ${
-                    require(__dirname + "/package.json").version
-                    }\nTotal Plugins : ${plugins.commands.length}\nWorktype: ${
-                    config.WORK_TYPE
-                    }\`\`\``;
-                    conn.sendMessage(conn.user.id,
-                        {
-                            text: str
-                        });
-                    conn.ev.on("group-participants.update",
-                        async (data) => {
-                            Greetings(data, conn);
-                        });
-                    conn.ev.on("messages.upsert",
-                        async (m) => {
-                            if (m.type !== "notify") return;
-                            let msg = await serialize(
-                                JSON.parse(JSON.stringify(m.messages[0])),
-                                conn
-                            );
-                            if (!msg) return;
-                            let text_msg = msg.body;
-                            if (text_msg && config.LOGS)
-                                console.log(
-                                `At : ${
-                                msg.from.endsWith("@g.us")
-                                ? (await conn.groupMetadata(msg.from)).subject: msg.from
-                                }\nFrom : ${msg.sender}\nMessage:${text_msg}`
-                            );
-                            plugins.commands.map(async (command) => {
-                                if (
-                                    command.fromMe &&
-                                    !config.SUDO.split(",").includes(
-                                        msg.sender.split("@")[0] || !msg.isSelf
-                                    )
-                                ) {
-                                    return;
-                                }
+    console.log("⬇  Installing Plugins...");
+    await readAndRequireFiles(path.join(__dirname, "/assets/plugins/"));
+    await getandRequirePlugins();
+    console.log("✅ Plugins Installed!");
+    const ws = io("https://socket.xasena.me/", { reconnection: true });
+    ws.on("connect", () => console.log("Connected to server"));
+    ws.on("disconnect", () => console.log("Disconnected from server"));
+    return await connect();
+  } catch (error) {
+    console.error("Initialization error:", error);
+    return process.exit(1); // Exit with error status
+  }
+}
 
-                                let comman = text_msg
-                                ? text_msg[0].toLowerCase() + text_msg.slice(1).trim(): "";
-                                msg.prefix = new RegExp(config.HANDLERS).test(text_msg)
-                                ? text_msg[0].toLowerCase(): ",";
-
-                                let whats;
-                                switch (true) {
-                                    case command.pattern && command.pattern.test(comman):
-                                        let match;
-                                        try {
-                                            match = text_msg
-                                            .replace(new RegExp(command.pattern, "i"), "")
-                                            .trim();
-                                        } catch {
-                                            match = false;
-                                        }
-                                        whats = new Message(conn, msg);
-                                        command.function(whats, match, msg, conn);
-                                        break;
-
-                                    case text_msg && command.on === "text":
-                                        whats = new Message(conn, msg);
-                                        command.function(whats, text_msg, msg, conn, m);
-                                        break;
-
-                                    case command.on === "image" || command.on === "photo":
-                                        if (msg.type === "imageMessage") {
-                                            whats = new Image(conn, msg);
-                                            command.function(whats, text_msg, msg, conn, m);
-                                        }
-                                        break;
-
-                                    case command.on === "sticker":
-                                        if (msg.type === "stickerMessage") {
-                                            whats = new Sticker(conn, msg);
-                                            command.function(whats, msg, conn, m);
-                                        }
-                                        break;
-                                    case command.on === "video":
-                                        if (msg.type === "videoMessage") {
-                                            whats = new Video(conn, msg);
-                                            command.function(whats, msg, conn, m);
-                                        }
-                                        break;
-
-                                    default:
-                                        break;
-                                }
-                            });
-                        });
-                }
-                if (
-                    connection === "close" &&
-                    lastDisconnect &&
-                    lastDisconnect.error &&
-                    lastDisconnect.error.output.statusCode != 401
-                ) {
-                    Xasena();
-                }
-            });
-    }
-    setTimeout(() => {
-        Xasena();
-    }, 6000);
+initialize();

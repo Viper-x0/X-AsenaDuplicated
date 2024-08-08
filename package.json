@@ -1,37 +1,48 @@
 {
     "name": "X-AsenaDuplicated",
-    "version": "4.0.0",
-    "description": "X-Asena project - a Whatsapp userbot helping to improve your Whatsapp experience.",
+    "version": "4.0.1",
+    "description": "X-AsenaDuplicated Project - A Whatsapp Userbot Helping To Improve Your Whatsapp Experience. Open Source Whatsapp Bot Made Using @WhiskeySockets/Baileys.",
     "main": "index.js",
     "directories": {
         "lib": "lib"
     },
     "dependencies": {
         "@adiwajshing/keyed-db": "^0.2.4",
-        "@ffmpeg-installer/ffmpeg": "^1.1.0",
-        "@hapi/boom": "^10.0.1",
-        "@viper-x/fancytext": "^1.0.0",
-        "@whiskeysockets/baileys": "github:WhiskeySockets/Baileys",
-        "acrcloud": "^1.4.0",
+        "@google/generative-ai": "^0.5.0",
+        "@neeraj-x0/ytsearch": "^1.0.0",
+        "axios": "^1.4.0",
+        "baileys": "github:X-Electra/baileys",
+        "bitly": "^4.1.1",
         "browser-id3-writer": "^4.4.0",
-        "express": "^4.18.2",
+        "cheerio": "^1.0.0-rc.12",
+        "dotenv": "^16.4.5",
         "file-type": "^16.5.3",
         "fluent-ffmpeg": "^2.1.2",
+        "form-data": "^4.0.0",
         "got": "^11.8.2",
-        "node-fetch": "^2.0.0",
+        "heroku-client": "^3.1.0",
+        "jimp": "^0.16.13",
+        "jsdom": "^22.1.0",
+        "jsqr": "^1.4.0",
         "node-webpmux": "^3.1.7",
-        "pastebin-js": "^1.0.6",
+        "pg": "^8.11.5",
         "pino": "^8.14.1",
+        "pm2": "^5.3.0",
+        "qrcode": "^1.5.3",
+        "qrcode-reader": "^1.0.4",
         "qrcode-terminal": "^0.12.0",
+        "say": "^0.16.0",
         "sequelize": "^6.23.0",
-        "sqlite3": "^5.1.6",
-        "x-asena": "^1.0.1",
-        "yt-search": "^2.10.4",
-        "ytdl-core": "^4.11.4"
+        "simple-git": "^3.24.0",
+        "socket.io-client": "^4.7.5",
+        "sqlite3": "^5.1.7",
+        "stream-buffers": "^3.0.2",
+        "x-asena": "^1.0.1"
     },
     "scripts": {
-        "test": "echo \"Error: no test specified\" && exit 1"
-    },
+    "start": "pm2 start index.js --name X-AsenaDuplicated && pm2 logs X-AsenaDuplicated",
+    "code": "node lib/pcode.js"
+  },
     "repository": {
         "type": "git",
         "url": "git+https://github.com/Viper-X0/X-AsenaDuplicated.git"
@@ -45,5 +56,10 @@
     "bugs": {
         "url": "https://github.com/Viper-X0/X-AsenaDuplicated/issues"
     },
-    "homepage": "https://github.com/X-Electra/X-Asena#readme"
+    "homepage": "https://github.com/X-Electra/X-Asena#readme",
+    "devDependencies": {
+    "@eslint/js": "^9.4.0",
+    "eslint": "^9.4.0",
+    "globals": "^15.4.0"
+  }
 }
