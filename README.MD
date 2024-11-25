@@ -101,7 +101,7 @@ X-Asena supports external plugins. You can find more information about external 
 
 Join the official WhatsApp group for X-Asena to get support, ask questions, and interact with other users:
 
-[![JOIN WHATSAPP GROUP](https://raw.githubusercontent.com/Neeraj-x0/Neeraj-x0/main/photos/suddidina-join-whatsapp.png)](hello)
+[![JOIN WHATSAPP GROUP](https://raw.githubusercontent.com/Neeraj-x0/Neeraj-x0/main/photos/suddidina-join-whatsapp.png)](https://chat.whatsapp.com/DJYrdBENyX33MRppEF)
 
 
 ## License
